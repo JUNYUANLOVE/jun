@@ -1,0 +1,30 @@
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart") -- 缓存根部件
+
+-- 创建平台（父级为workspace，角色死亡不消失）
+local platform = Instance.new("Part")
+platform.Name = "JumpPlatform"
+platform.Size = Vector3.new(30, 5, 30)
+platform.Anchored = true
+platform.BrickColor = BrickColor.new("Cyan")
+platform.Transparency = 0.5
+platform.Material = Enum.Material.Glass
+platform.Parent = workspace -- 关键：父级设为workspace，而非角色
+
+-- 角色复活后重新绑定根部件
+local function onCharacterRespawned(newCharacter)
+    character = newCharacter
+    -- 等待新角色的HumanoidRootPart加载（防止nil错误）
+    humanoidRootPart = character:WaitForChild("HumanoidRootPart", 10)
+end
+
+-- 监听角色复活事件
+player.CharacterAdded:Connect(onCharacterRespawned)
+
+-- 流畅更新平台位置（用Heartbeat比wait更稳定）
+game:GetService("RunService").Heartbeat:Connect(function()
+    if humanoidRootPart and humanoidRootPart.Parent then -- 安全判断：避免部件被销毁
+        platform.Position = humanoidRootPart.Position + Vector3.new(0, -4, 0)
+    end
+end)
